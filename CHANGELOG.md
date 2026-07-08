@@ -16,3 +16,13 @@
 ### Fixed
 - Removed duplicate CSS/JS code from HTML template
 - Cleaner template structure for future development
+- Automatic update detection now uses semantic version comparison instead of date-based checks, ensuring reliable update notifications when version numbers change
+
+## [1.0.1] - 2026-07-08
+
+### Fixed
+- Implemented semantic version comparison for update checker
+- Added `get_github_remote_version()` to fetch `version.txt` from GitHub
+- Added `compare_versions()` to properly compare semantic versions (e.g., 1.0.0 vs 1.1.0)
+- Modified `check_for_updates()` to compare version numbers instead of commit dates
+- Added `local_version.json` with initial version 1.0.0 for reliable update detection
