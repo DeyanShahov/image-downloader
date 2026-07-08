@@ -1,0 +1,336 @@
+/* templates/css/styles.css */
+/* Основни стилове */
+* { box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 1400px; margin: 0 auto; padding: 1rem;
+    background-color: #f4f7f9; color: #333;
+    min-height: 100vh;
+}
+body.dark-mode { background-color: #121212; color: #e0e0e0; }
+
+h1 { text-align: center; color: #0056b3; }
+body.dark-mode h1 { color: #66b0ff; }
+
+/* Форма */
+.main-form { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+body.dark-mode .main-form { background: #1e1e1e; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+
+label { display: block; margin-top: 1rem; }
+input, textarea {
+    width: 100%; padding: 0.5rem; margin-top: 0.5rem;
+    box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;
+    font-family: inherit; resize: vertical;
+}
+body.dark-mode input, body.dark-mode textarea {
+    background-color: #2c2c2c; border-color: #444; color: #fff;
+}
+
+button {
+    margin-top: 1.5rem; padding: 0.7rem 1.5rem; cursor: pointer;
+    background: #007bff; color: white; border: none; font-size: 1rem; border-radius: 4px;
+}
+button:hover { background: #0056b3; }
+button:disabled { background: #aaa; cursor: not-allowed; }
+
+.btn-small {
+    padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-top: 0;
+    margin-left: 0.25rem;
+}
+.btn-danger { background: #dc3545; }
+.btn-danger:hover { background: #a71d2a; }
+.btn-success { background: #28a745; }
+.btn-success:hover { background: #1e7e34; }
+.btn-warning { background: #ffc107; color: #333; }
+.btn-warning:hover { background: #d39e00; }
+
+/* Toggle Button */
+#theme-toggle {
+    position: absolute; top: 1rem; right: 1rem;
+    background: transparent; color: #333; border: 1px solid #ccc;
+    padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; margin: 0;
+}
+#theme-toggle:hover { background: #e0e0e0; }
+body.dark-mode #theme-toggle { color: #fff; border-color: #555; }
+body.dark-mode #theme-toggle:hover { background: #333; }
+
+/* Progress / Log / Gallery */
+#progress-container { display: none; margin-top: 2rem; }
+#progress-bar {
+    width: 0%; height: 20px; background-color: #4CAF50;
+    text-align: center; line-height: 20px; color: white; border-radius: 4px;
+}
+#log {
+    display: none; background-color: #222; color: #eee;
+    font-family: monospace; padding: 1rem; margin-top: 1rem;
+    height: 300px; overflow-y: scroll; border-radius: 4px;
+    width: 100%;
+}
+body.dark-mode #log { background-color: #000; border: 1px solid #333; }
+
+#results-gallery {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;
+    width: 100%;
+}
+#results-gallery img {
+    height: 150px; object-fit: cover; border: 1px solid #ddd;
+    border-radius: 4px; cursor: pointer; transition: transform 0.2s;
+}
+body.dark-mode #results-gallery img { border-color: #444; }
+#results-gallery img:hover { transform: scale(1.05); }
+
+small { color: #666; }
+body.dark-mode small { color: #aaa; }
+
+.checkbox-wrapper { margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.checkbox-wrapper input { width: auto; margin: 0; }
+
+/* URL Manager Panel */
+.url-panel {
+    margin-top: 2rem; background: white; padding: 1.5rem;
+    border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    min-height: auto;
+}
+body.dark-mode .url-panel {
+    background: #1e1e1e; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+.url-panel h2 { margin-top: 0; color: #0056b3; }
+body.dark-mode .url-panel h2 { color: #66b0ff; }
+
+.url-panel .add-row {
+    display: flex; gap: 0.5rem; margin-bottom: 1rem;
+}
+.url-panel .add-row input {
+    flex: 1; margin-top: 0;
+}
+.url-panel .add-row button {
+    margin-top: 0; white-space: nowrap;
+}
+
+.url-list-container {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid #ddd; border-radius: 4px;
+}
+body.dark-mode .url-list-container { border-color: #444; }
+
+.url-list-container table {
+    width: 100%; border-collapse: collapse;
+}
+
+.url-list-container th {
+    position: sticky; top: 0; z-index: 1;
+    background: #f0f0f0; padding: 0.5rem;
+    text-align: left; font-size: 0.85rem;
+    border-bottom: 2px solid #ddd;
+}
+body.dark-mode .url-list-container th {
+    background: #2c2c2c; border-bottom-color: #444;
+}
+
+.url-list-container td {
+    padding: 0.4rem 0.5rem; border-bottom: 1px solid #eee;
+    font-size: 0.85rem; vertical-align: middle;
+}
+body.dark-mode .url-list-container td { border-bottom-color: #333; }
+
+.url-list-container tr:hover td {
+    background: #f9f9f9;
+}
+body.dark-mode .url-list-container tr:hover td {
+    background: #2a2a2a;
+}
+
+.url-list-container tr.selected td {
+    background: #cce5ff;
+}
+body.dark-mode .url-list-container tr.selected td {
+    background: #1a3a5c;
+}
+
+.url-text-cell {
+    word-break: break-all;
+    white-space: normal;
+}
+
+.url-actions { white-space: nowrap; text-align: right; }
+
+.url-actions .btn-icon {
+    background: transparent; border: none; cursor: pointer;
+    padding: 0.2rem 0.4rem; font-size: 1rem; margin: 0 0.1rem;
+    border-radius: 3px;
+}
+.url-actions .btn-icon:hover { background: #e0e0e0; }
+body.dark-mode .url-actions .btn-icon:hover { background: #444; }
+
+.load-actions {
+    margin-top: 1rem; display: flex; gap: 0.5rem;
+}
+
+.status-msg {
+    padding: 0.5rem; margin-top: 0.5rem; border-radius: 4px;
+    font-size: 0.85rem; display: none;
+}
+.status-msg.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.status-msg.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+body.dark-mode .status-msg.success { background: #1e3a2a; color: #9fdfb2; border-color: #2a5a3a; }
+body.dark-mode .status-msg.error { background: #3a1e1e; color: #f5a0a0; border-color: #5a2a2a; }
+
+.increment-highlight {
+    color: #28a745; font-weight: bold;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+    .two-columns {
+        display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem;
+        align-items: start;
+    }
+}
+
+/* Update Notification Banner */
+#update-banner {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+#update-banner .update-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+#update-banner .update-info {
+    flex: 1;
+    min-width: 250px;
+}
+
+#update-banner h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+#update-banner p {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+    opacity: 0.95;
+}
+
+#update-banner .update-commit {
+    font-family: monospace;
+    background: rgba(255,255,255,0.2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+}
+
+#update-banner .update-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#update-banner button {
+    margin: 0;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+#update-banner .btn-update {
+    background: white;
+    color: #667eea;
+}
+
+#update-banner .btn-update:hover {
+    background: #f0f0f0;
+    transform: translateY(-2px);
+}
+
+#update-banner .btn-dismiss {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+#update-banner .btn-dismiss:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+#update-banner .btn-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#update-banner.loading .btn-update-text {
+    display: none;
+}
+
+#update-banner.loading .btn-spinner {
+    display: block;
+}
+
+#update-banner .update-message {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    display: none;
+}
+
+#update-banner .update-message.success {
+    background: rgba(40, 167, 69, 0.3);
+    display: block;
+}
+
+#update-banner .update-message.error {
+    background: rgba(220, 53, 69, 0.3);
+    display: block;
+}
+
+/* Add padding to body when banner is shown */
+body.update-available {
+    padding-top: 200px;
+}
