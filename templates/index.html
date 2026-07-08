@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Downloader</title>
+    <style>
+        /* ─── Основни стилове ─────────────────────────────────────────────── */
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 1400px; margin: 0 auto; padding: 1rem;
+            background-color: #f4f7f9; color: #333;
+            min-height: 100vh;
+        }
+        body.dark-mode { background-color: #121212; color: #e0e0e0; }
+
+        h1 { text-align: center; color: #0056b3; }
+        body.dark-mode h1 { color: #66b0ff; }
+
+        /* ─── Форма ────────────────────────────────────────────────────────── */
+        .main-form { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        body.dark-mode .main-form { background: #1e1e1e; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+
+        label { display: block; margin-top: 1rem; }
+        input, textarea {
+            width: 100%; padding: 0.5rem; margin-top: 0.5rem;
+            box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;
+            font-family: inherit; resize: vertical;
+        }
+        body.dark-mode input, body.dark-mode textarea {
+            background-color: #2c2c2c; border-color: #444; color: #fff;
+        }
+
+        button {
+            margin-top: 1.5rem; padding: 0.7rem 1.5rem; cursor: pointer;
+            background: #007bff; color: white; border: none; font-size: 1rem; border-radius: 4px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #aaa; cursor: not-allowed; }
+
+        .btn-small {
+            padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-top: 0;
+            margin-left: 0.25rem;
+        }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #a71d2a; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #1e7e34; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-warning:hover { background: #d39e00; }
+
+        /* ─── Toggle Button ───────────────────────────────────────────────── */
+        #theme-toggle {
+            position: absolute; top: 1rem; right: 1rem;
+            background: transparent; color: #333; border: 1px solid #ccc;
+            padding: 0.5rem; border-radius: 50%; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; margin: 0;
+        }
+        #theme-toggle:hover { background: #e0e0e0; }
+        body.dark-mode #theme-toggle { color: #fff; border-color: #555; }
+        body.dark-mode #theme-toggle:hover { background: #333; }
+
+        /* ─── Progress / Log / Gallery ────────────────────────────────────── */
+        #progress-container { display: none; margin-top: 2rem; }
+        #progress-bar {
+            width: 0%; height: 20px; background-color: #4CAF50;
+            text-align: center; line-height: 20px; color: white; border-radius: 4px;
+        }
+        #log {
+            display: none; background-color: #222; color: #eee;
+            font-family: monospace; padding: 1rem; margin-top: 1rem;
+            height: 300px; overflow-y: scroll; border-radius: 4px;
+            width: 100%;
+        }
+        body.dark-mode #log { background-color: #000; border: 1px solid #333; }
+
+        #results-gallery {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;
+            width: 100%;
+        }
+        #results-gallery img {
+            height: 150px; object-fit: cover; border: 1px solid #ddd;
+            border-radius: 4px; cursor: pointer; transition: transform 0.2s;
+        }
+        body.dark-mode #results-gallery img { border-color: #444; }
+        #results-gallery img:hover { transform: scale(1.05); }
+
+        small { color: #666; }
+        body.dark-mode small { color: #aaa; }
+
+        .checkbox-wrapper { margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .checkbox-wrapper input { width: auto; margin: 0; }
+
+        /* ─── URL Manager Panel ───────────────────────────────────────────── */
+        .url-panel {
+            margin-top: 2rem; background: white; padding: 1.5rem;
+            border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            min-height: auto;
+        }
+        body.dark-mode .url-panel {
+            background: #1e1e1e; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        .url-panel h2 { margin-top: 0; color: #0056b3; }
+        body.dark-mode .url-panel h2 { color: #66b0ff; }
+
+        .url-panel .add-row {
+            display: flex; gap: 0.5rem; margin-bottom: 1rem;
+        }
+        .url-panel .add-row input {
+            flex: 1; margin-top: 0;
+        }
+        .url-panel .add-row button {
+            margin-top: 0; white-space: nowrap;
+        }
+
+        .url-list-container {
+            max-height: 420px; /* ~10可视行 */
+            overflow-y: auto;
+            border: 1px solid #ddd; border-radius: 4px;
+        }
+        body.dark-mode .url-list-container { border-color: #444; }
+
+        .url-list-container table {
+            width: 100%; border-collapse: collapse;
+        }
+
+        .url-list-container th {
+            position: sticky; top: 0; z-index: 1;
+            background: #f0f0f0; padding: 0.5rem;
+            text-align: left; font-size: 0.85rem;
+            border-bottom: 2px solid #ddd;
+        }
+        body.dark-mode .url-list-container th {
+            background: #2c2c2c; border-bottom-color: #444;
+        }
+
+        .url-list-container td {
+            padding: 0.4rem 0.5rem; border-bottom: 1px solid #eee;
+            font-size: 0.85rem; vertical-align: middle;
+        }
+        body.dark-mode .url-list-container td { border-bottom-color: #333; }
+
+        .url-list-container tr:hover td {
+            background: #f9f9f9;
+        }
+        body.dark-mode .url-list-container tr:hover td {
+            background: #2a2a2a;
+        }
+
+        .url-list-container tr.selected td {
+            background: #cce5ff;
+        }
+        body.dark-mode .url-list-container tr.selected td {
+            background: #1a3a5c;
+        }
+
+        .url-text-cell {
+            word-break: break-all;
+            white-space: normal;
+        }
+
+        .url-actions { white-space: nowrap; text-align: right; }
+
+        .url-actions .btn-icon {
+            background: transparent; border: none; cursor: pointer;
+            padding: 0.2rem 0.4rem; font-size: 1rem; margin: 0 0.1rem;
+            border-radius: 3px;
+        }
+        .url-actions .btn-icon:hover { background: #e0e0e0; }
+        body.dark-mode .url-actions .btn-icon:hover { background: #444; }
+
+        .load-actions {
+            margin-top: 1rem; display: flex; gap: 0.5rem;
+        }
+
+        .status-msg {
+            padding: 0.5rem; margin-top: 0.5rem; border-radius: 4px;
+            font-size: 0.85rem; display: none;
+        }
+        .status-msg.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-msg.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        body.dark-mode .status-msg.success { background: #1e3a2a; color: #9fdfb2; border-color: #2a5a3a; }
+        body.dark-mode .status-msg.error { background: #3a1e1e; color: #f5a0a0; border-color: #5a2a2a; }
+
+        .increment-highlight {
+            color: #28a745; font-weight: bold;
+        }
+
+        /* ─── Responsive ──────────────────────────────────────────────────── */
+        @media (min-width: 768px) {
+            .two-columns {
+                display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem;
+                align-items: start;
+            }
+        }
+
+        /* ─── Update Notification Banner ──────────────────────────────────── */
+        #update-banner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        #update-banner .update-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        #update-banner .update-info {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        #update-banner h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+        
+        #update-banner p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+        
+        #update-banner .update-commit {
+            font-family: monospace;
+            background: rgba(255,255,255,0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }
+        
+        #update-banner .update-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        #update-banner button {
+            margin: 0;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        #update-banner .btn-update {
+            background: white;
+            color: #667eea;
+        }
+        
+        #update-banner .btn-update:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+        
+        #update-banner .btn-dismiss {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        #update-banner .btn-dismiss:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        #update-banner .btn-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #update-banner.loading .btn-update-text {
+            display: none;
+        }
+        
+        #update-banner.loading .btn-spinner {
+            display: block;
+        }
+        
+        #update-banner .update-message {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            display: none;
+        }
+        
+        #update-banner .update-message.success {
+            background: rgba(40, 167, 69, 0.3);
+            display: block;
+        }
+        
+        #update-banner .update-message.error {
+            background: rgba(220, 53, 69, 0.3);
+            display: block;
+        }
+
+        /* Add padding to body when banner is shown */
+        body.update-available {
+            padding-top: 200px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Update Notification Banner -->
+    <div id="update-banner">
+        <div class="update-content">
+            <div class="update-info">
+                <h3>🎉 Налично е обновление!</h3>
+                <p><strong>Commit:</strong> <span id="update-commit" class="update-commit"></span></p>
+                <p><strong>Дата:</strong> <span id="update-date"></span></p>
+                <p><strong>Промени:</strong> <span id="update-message"></span></p>
+                <div id="update-status" class="update-message"></div>
+            </div>
+            <div class="update-actions">
+                <button class="btn-update" onclick="performUpdate()">
+                    <span class="btn-update-text">🔄 Обнови сега</span>
+                    <div class="btn-spinner"></div>
+                </button>
+                <button class="btn-dismiss" onclick="dismissUpdate()">✕ По-късно</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="theme-toggle" title="Превключи тема">🌓</button>
+
+    <h1>Сваляне на Изображения</h1>
+
+    <!-- ─── Основна форма (лява колона) ────────────────────────────────── -->
+    <div class="main-form">
+        <form id="download-form" action="/download" method="GET">
+            <label for="url">URL адреси (разделени със запетая, интервал или нов ред):</label>
+            <textarea id="url" name="url" rows="5" placeholder="https://site.com/img1.jpg&#10;https://site.com/img2.jpg" required></textarea>
+
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="clear-url" name="clear-url">
+                <label for="clear-url" style="margin: 0; display: inline;">Изчисти URL след приключване</label>
+            </div>
+
+            <!-- Скрито поле за индексите на URL-ите от списъка (разделени със запетая) -->
+            <input type="hidden" id="url-index" name="url_index" value="">
+
+            <label for="iterations">Брой изображения (итерации):</label>
+            <input type="number" id="iterations" name="iterations" value="10" min="1" required>
+
+            <label for="output_folder">Име на папка за запис:</label>
+            <input type="text" id="output_folder" name="output_folder" placeholder="my_gallery_1 или пълен път (напр. C:\Images)" required>
+            <small>Въведете име за папка в проекта или пълен път до директория на компютъра.</small>
+
+            <button type="submit" id="submit-btn">Старт на свалянето</button>
+        </form>
+    </div>
+
+    <!-- ─── Два колонени панела под хоризонтално ───────────────────────── -->
+    <div class="two-columns">
+        <!-- ─── Лява колона: Добавяне на нов URL ─────────────────────────── -->
+        <div>
+            <h2>Моите URL адреси</h2>
+            <p style="margin: 0 0 0.75rem 0; font-size: 0.85rem; color: #666;">
+                <small>Добавяйте, редактирайте и зареждайте URL адреси от списъка.</small>
+            </p>
+
+            <!-- Добавяне на нов URL -->
+            <div class="add-row">
+                <input type="text" id="new-url-input" placeholder="https://example.com/gallery/0001/img.jpg">
+                <button id="add-url-btn" class="btn-success">+ Добави</button>
+            </div>
+
+            <!-- Статус съобщение -->
+            <div id="url-status" class="status-msg"></div>
+        </div>
+
+        <!-- ─── Дясна колона: Списък с URL адреси ───────────────────────── -->
+        <div>
+            <div id="url-list-wrapper" class="url-list-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>URL адрес</th>
+                            <th style="width: 80px; text-align: right;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="url-list-body">
+                        <!-- Редовете се генерират динамично от JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="url-list-empty" style="text-align: center; padding: 2rem; color: #999; font-style: italic;">
+                Списъкът е празен. Добавете първия URL адрес по-горе.
+            </div>
+
+            <!-- Бутони за действие -->
+            <div class="load-actions">
+                <button id="load-url-btn" class="btn-small" disabled>📋 Зареди URL</button>
+                <button id="refresh-url-btn" class="btn-small btn-warning">🔄 Презареди</button>
+            </div>
+            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #999;">
+                <span id="url-count">0</span> адреса в списъка
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Прогрес и резултати (под двете колони, цяла ширина) ─────────── -->
+    <div id="progress-container">
+        <div id="progress-bar">0%</div>
+    </div>
+
+    <div id="log"></div>
+
+    <div id="results-gallery"></div>
+
+    <script>
+        // ─── Константи и DOM референции ─────────────────────────────────────
+        const form = document.getElementById('download-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const progressBarContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const logDiv = document.getElementById('log');
+        const galleryDiv = document.getElementById('results-gallery');
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const clearUrlCheckbox = document.getElementById('clear-url');
+        const urlTextarea = document.getElementById('url');
+        const urlIndexHidden = document.getElementById('url-index');
+        const newUrlInput = document.getElementById('new-url-input');
+        const addUrlBtn = document.getElementById('add-url-btn');
+        const loadUrlBtn = document.getElementById('load-url-btn');
+        const refreshUrlBtn = document.getElementById('refresh-url-btn');
+        const urlListBody = document.getElementById('url-list-body');
+        const urlListWrapper = document.getElementById('url-list-wrapper');
+        const urlListEmpty = document.getElementById('url-list-empty');
+        const urlStatus = document.getElementById('url-status');
+        const urlCountSpan = document.getElementById('url-count');
+
+        let selectedUrlIndex = -1;  // Кой ред е маркиран
+
+        // ─── Тъмна тема ──────────────────────────────────────────────────────
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        });
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // ─── API функции ─────────────────────────────────────────────────────
+        async function apiGetUrls() {
+            const res = await fetch('/api/urls');
+            return await res.json();
+        }
+
+        async function apiAddUrl(url) {
+            const res = await fetch('/api/urls/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            return await res.json();
+        }
+
+        async function apiDeleteUrl(index) {
+            const res = await fetch('/api/urls/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ index })
+            });
+            return await res.json();
+        }
+
+        async function apiUpdateUrl(index, url) {
+            const res = await fetch('/api/urls/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ index, url })
+            });
+            return await res.json();
+        }
+
+        // ─── Помощни функции за url_index ──────────────────────────────────
+        function getUrlIndices() {
+            const val = urlIndexHidden.value.trim();
+            if (!val) return [];
+            return val.split(',').map(Number).filter(n => !isNaN(n));
+        }
+
+        function setUrlIndices(indices) {
+            urlIndexHidden.value = indices.join(',');
+        }
+
+        function addUrlIndex(index) {
+            const current = getUrlIndices();
+            current.push(index);
+            setUrlIndices(current);
+            console.log('addUrlIndex:', index, '-> url_index:', urlIndexHidden.value);
+        }
+
+        /**
+         * Рекурсивно извлича числото от дадена част на URL (директория или файл).
+         * Връща числото или null, ако няма.
+         */
+        function extractNumberFromUrlPart(part) {
+            const match = part.match(/(\d+)/);
+            return match ? match[1] : null;
+        }
+
+        // ─── Показване на статус съобщение ──────────────────────────────────
+        let statusTimeout = null;
+        function showStatus(message, type) {
+            urlStatus.textContent = message;
+            urlStatus.className = 'status-msg ' + type;
+            // Показване чрез премахване на скритието
+            urlStatus.style.display = 'block';
+            // Автоматично скриване след 5 секунди
+            if (statusTimeout) clearTimeout(statusTimeout);
+            statusTimeout = setTimeout(() => {
+                urlStatus.style.display = 'none';
+            }, 5000);
+        }
+
+        // ─── Зареждане и рендериране на списъка ─────────────────────────────
+        async function loadUrlList() {
+            try {
+                const data = await apiGetUrls();
+                renderUrlList(data.urls);
+                urlCountSpan.textContent = data.count;
+            } catch (err) {
+                console.error('Грешка при зареждане на URL списъка:', err);
+                showStatus('Грешка при зареждане на списъка.', 'error');
+            }
+        }
+
+        function renderUrlList(urls) {
+            urlListBody.innerHTML = '';
+
+            if (!urls || urls.length === 0) {
+                urlListWrapper.style.display = 'none';
+                urlListEmpty.style.display = 'block';
+                loadUrlBtn.disabled = true;
+                return;
+            }
+
+            urlListWrapper.style.display = 'block';
+            urlListEmpty.style.display = 'none';
+            loadUrlBtn.disabled = false;
+
+            urls.forEach((url, index) => {
+                const tr = document.createElement('tr');
+                if (index === selectedUrlIndex) {
+                    tr.classList.add('selected');
+                }
+                tr.dataset.index = index;
+
+                // Радио бутон за избор (визуален)
+                const tdSelect = document.createElement('td');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'url-select';
+                radio.value = index;
+                radio.checked = (index === selectedUrlIndex);
+                radio.addEventListener('change', () => {
+                    selectUrl(index);
+                });
+                tdSelect.appendChild(radio);
+
+                // URL текст
+                const tdUrl = document.createElement('td');
+                tdUrl.className = 'url-text-cell';
+                tdUrl.textContent = url;
+
+                // Бутони за действия
+                const tdActions = document.createElement('td');
+                tdActions.className = 'url-actions';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn-icon';
+                editBtn.title = 'Редактирай';
+                editBtn.textContent = '✏️';
+                editBtn.addEventListener('click', () => editUrl(index, url));
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn-icon';
+                deleteBtn.title = 'Изтрий';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.addEventListener('click', () => deleteUrl(index));
+
+                tdActions.appendChild(editBtn);
+                tdActions.appendChild(deleteBtn);
+
+                tr.appendChild(tdSelect);
+                tr.appendChild(tdUrl);
+                tr.appendChild(tdActions);
+
+                // Клик върху целия ред за избор
+                tr.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                        radio.checked = true;
+                        selectUrl(index);
+                    }
+                });
+
+                urlListBody.appendChild(tr);
+            });
+        }
+
+        // ─── Избор на URL от списъка ────────────────────────────────────────
+        function selectUrl(index) {
+            selectedUrlIndex = index;
+            // Обновяваме визуалния избор
+            const rows = urlListBody.querySelectorAll('tr');
+            rows.forEach((row, i) => {
+                row.classList.toggle('selected', i === index);
+                const radio = row.querySelector('input[type="radio"]');
+                if (radio) radio.checked = (i === index);
+            });
+            loadUrlBtn.disabled = false;
+        }
+
+        // ─── Зареждане на избрания URL в полето ─────────────────────────────
+        function loadSelectedUrl() {
+            if (selectedUrlIndex < 0) {
+                showStatus('Моля, изберете URL адрес от списъка.', 'error');
+                return;
+            }
+
+            const rows = urlListBody.querySelectorAll('tr');
+            if (selectedUrlIndex >= rows.length) {
+                showStatus('Невалиден избор.', 'error');
+                return;
+            }
+
+            const urlCell = rows[selectedUrlIndex].querySelector('.url-text-cell');
+            if (!urlCell) return;
+
+            let url = urlCell.textContent.trim();
+
+            // Разделяме URL на части за проверка на дублиране
+            const urlParts = url.split('/');
+            const urlFilename = urlParts[urlParts.length - 1];
+            const urlDirNumber = extractNumberFromUrlPart(urlParts[urlParts.length - 2]);
+
+            // Вземаме всички вече заредени URL-и и проверяваме за съвпадение
+            const currentLines = urlTextarea.value.split('\n').map(l => l.trim()).filter(l => l);
+            let maxNumber = null;
+
+            for (const line of currentLines) {
+                const parts = line.split('/');
+                if (parts.length < 2) continue;
+
+                const dirNumber = extractNumberFromUrlPart(parts[parts.length - 2]);
+                const filename = parts[parts.length - 1];
+
+                // Ако съвпадат базовата директория и името на файла - това е дубликат
+                if (dirNumber && urlDirNumber) {
+                    const baseMatch = line.indexOf(urlParts.slice(0, -2).join('/'));
+                    if (baseMatch !== -1 && filename === urlFilename) {
+                        const num = parseInt(dirNumber, 10);
+                        if (isNaN(num)) continue;
+                        if (maxNumber === null || num > maxNumber) {
+                            maxNumber = num;
+                        }
+                    }
+                }
+            }
+
+            // Ако има вече зареден URL с тази база, инкрементираме
+            if (maxNumber !== null) {
+                const newNumber = maxNumber + 1;
+                const padding = urlDirNumber ? urlDirNumber.length : 1;
+                const newNumberStr = String(newNumber).padStart(padding, '0');
+                urlParts[urlParts.length - 2] = urlParts[urlParts.length - 2].replace(
+                    new RegExp('(\\d+)'),
+                    newNumberStr
+                );
+                url = urlParts.join('/');
+            }
+
+            // Добавяме URL-а като нов ред в textarea
+            const currentValue = urlTextarea.value.trim();
+            if (currentValue) {
+                urlTextarea.value = currentValue + '\n' + url;
+            } else {
+                urlTextarea.value = url;
+            }
+
+            // Добавяме индекса към списъка с индекси за инкрементиране
+            addUrlIndex(selectedUrlIndex);
+
+            showStatus(`URL адресът е зареден в полето: ${url}`, 'success');
+        }
+
+        // ─── Добавяне на нов URL ────────────────────────────────────────────
+        async function addUrl() {
+            const url = newUrlInput.value.trim();
+            if (!url) {
+                showStatus('Моля, въведете URL адрес.', 'error');
+                return;
+            }
+
+            try {
+                const result = await apiAddUrl(url);
+                if (result.success) {
+                    showStatus(result.message, 'success');
+                    newUrlInput.value = '';
+                    renderUrlList(result.urls);
+                    urlCountSpan.textContent = result.urls.length;
+                } else {
+                    showStatus(result.message, 'error');
+                }
+            } catch (err) {
+                showStatus('Грешка при добавяне на URL адрес.', 'error');
+            }
+        }
+
+        // ─── Изтриване на URL ───────────────────────────────────────────────
+        async function deleteUrl(index) {
+            if (!confirm('Сигурни ли сте, че искате да изтриете този URL адрес?')) {
+                return;
+            }
+
+            try {
+                const result = await apiDeleteUrl(index);
+                if (result.success) {
+                    showStatus(result.message, 'success');
+                    if (selectedUrlIndex === index) {
+                        selectedUrlIndex = -1;
+                    } else if (selectedUrlIndex > index) {
+                        selectedUrlIndex--;
+                    }
+                    renderUrlList(result.urls);
+                    urlCountSpan.textContent = result.urls.length;
+                } else {
+                    showStatus(result.message, 'error');
+                }
+            } catch (err) {
+                showStatus('Грешка при изтриване на URL адрес.', 'error');
+            }
+        }
+
+        // ─── Редактиране на URL ─────────────────────────────────────────────
+        function editUrl(index, currentUrl) {
+            const newUrl = prompt('Редактирайте URL адреса:', currentUrl);
+            if (!newUrl || newUrl === currentUrl) return;
+
+            fetch('/api/urls/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ index, url: newUrl })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    showStatus(result.message, 'success');
+                    renderUrlList(result.urls);
+                    urlCountSpan.textContent = result.urls.length;
+                } else {
+                    showStatus(result.message, 'error');
+                }
+            })
+            .catch(() => showStatus('Грешка при редактиране на URL адрес.', 'error'));
+        }
+
+        // ─── Събитие за добавяне чрез Enter ─────────────────────────────────
+        newUrlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addUrl();
+            }
+        });
+
+        // ─── Събитие за бутоните ────────────────────────────────────────────
+        addUrlBtn.addEventListener('click', addUrl);
+        loadUrlBtn.addEventListener('click', loadSelectedUrl);
+        refreshUrlBtn.addEventListener('click', loadUrlList);
+
+        // ─── Изпращане на формата ───────────────────────────────────────────
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            // Нулиране на предишни резултати
+            submitBtn.disabled = true;
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            progressBarContainer.style.display = 'block';
+            logDiv.innerHTML = '';
+            logDiv.style.display = 'block';
+            galleryDiv.innerHTML = '';
+            progressBar.style.backgroundColor = '#4CAF50';
+
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+
+            // Създаваме EventSource връзка към нашия Flask endpoint
+            const eventSource = new EventSource(`/download?${params.toString()}`);
+
+            eventSource.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+
+                    // Обработка на съобщения от сървъра
+                    if (data.type === 'info' || data.type === 'error' || data.type === 'progress') {
+                        const logEntry = document.createElement('div');
+                        logEntry.textContent = data.message;
+                        logDiv.appendChild(logEntry);
+                        logDiv.scrollTop = logDiv.scrollHeight;
+                    }
+
+                    if (data.type === 'progress') {
+                        const percent = Math.round((data.current / data.total) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressBar.textContent = percent + '%';
+                    }
+
+                    if (data.type === 'increment_info') {
+                        // Показваме информация за инкрементиране
+                        const logEntry = document.createElement('div');
+                        logEntry.className = 'increment-highlight';
+                        logEntry.textContent = '🔁 ' + data.message;
+                        logDiv.appendChild(logEntry);
+                        logDiv.scrollTop = logDiv.scrollHeight;
+
+                        // Автоматично обновяване на списъка
+                        loadUrlList();
+                    }
+
+                    if (data.type === 'complete') {
+                        eventSource.close();
+                        submitBtn.disabled = false;
+                        progressBar.textContent = 'Готово!';
+
+                        // Изчистване на скритото поле за url_index
+                        urlIndexHidden.value = '';
+
+                        // Проверка дали трябва да изчистим URL полето
+                        if (clearUrlCheckbox.checked) {
+                            document.getElementById('url').value = '';
+                        }
+
+                        // Показваме галерията със свалените изображения
+                        const folder = formData.get('output_folder');
+                        data.files.forEach(file => {
+                            const img = document.createElement('img');
+                            img.src = `/view_image?folder=${encodeURIComponent(folder)}&file=${encodeURIComponent(file)}`;
+                            galleryDiv.appendChild(img);
+                        });
+                    }
+
+                    if (data.type === 'error') {
+                        eventSource.close();
+                        submitBtn.disabled = false;
+                        progressBar.style.backgroundColor = '#dc3545';
+                        progressBar.textContent = 'Грешка!';
+                    }
+                } catch (err) {
+                    console.error('Грешка при парсване на SSE данни:', err);
+                }
+            };
+
+            eventSource.onerror = function(err) {
+                console.error("EventSource failed:", err);
+                logDiv.innerHTML += '<div>Грешка при връзката със сървъра.</div>';
+                eventSource.close();
+                submitBtn.disabled = false;
+            };
+        });
+
+        // ─── Инициализация при зареждане ────────────────────────────────────
+        loadUrlList();
+        
+        // ─── Проверка за обновления при старт ─────────────────────────────
+        checkForUpdatesOnLoad();
+        
+        // ─── Update Notification Functions ─────────────────────────────────
+        let updateData = null;
+        
+        async function checkForUpdatesOnLoad() {
+            try {
+                const response = await fetch('/api/version/check');
+                const data = await response.json();
+                
+                if (data.has_update) {
+                    updateData = data.commit;
+                    showUpdateBanner(data.commit, data.message);
+                }
+            } catch (err) {
+                console.error('Грешка при проверка за обновления:', err);
+            }
+        }
+        
+        function showUpdateBanner(commit, message) {
+            const banner = document.getElementById('update-banner');
+            const commitEl = document.getElementById('update-commit');
+            const dateEl = document.getElementById('update-date');
+            const messageEl = document.getElementById('update-message');
+            
+            // Показване на информация за commit-а
+            if (commit) {
+                commitEl.textContent = commit.sha ? commit.sha.substring(0, 8) : 'N/A';
+                dateEl.textContent = commit.date ? new Date(commit.date).toLocaleString('bg-BG') : 'N/A';
+                messageEl.textContent = commit.message || 'Няма информация';
+            }
+            
+            // Показване на banner
+            banner.style.display = 'block';
+            document.body.classList.add('update-available');
+        }
+        
+        function dismissUpdate() {
+            const banner = document.getElementById('update-banner');
+            banner.style.display = 'none';
+            document.body.classList.remove('update-available');
+            updateData = null;
+        }
+        
+        async function performUpdate() {
+            const banner = document.getElementById('update-banner');
+            const statusEl = document.getElementById('update-status');
+            const updateBtn = banner.querySelector('.btn-update');
+            
+            // Показвай loading състояние
+            banner.classList.add('loading');
+            updateBtn.disabled = true;
+            statusEl.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/version/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusEl.textContent = '✅ Обновяването е успешно! Страницата ще се презареди...';
+                    statusEl.className = 'update-message success';
+                    statusEl.style.display = 'block';
+                    
+                    // Забавяне преди презареждане
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    statusEl.textContent = '❌ Грешка при обновяване: ' + data.message;
+                    statusEl.className = 'update-message error';
+                    statusEl.style.display = 'block';
+                    
+                    // Възстанови бутона
+                    banner.classList.remove('loading');
+                    updateBtn.disabled = false;
+                }
+            } catch (err) {
+                statusEl.textContent = '❌ Грешка при свързване със сървъра.';
+                statusEl.className = 'update-message error';
+                statusEl.style.display = 'block';
+                
+                banner.classList.remove('loading');
+                updateBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
