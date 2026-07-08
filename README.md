@@ -35,7 +35,7 @@ Flask web application for automatic downloading of sequential images from URLs w
 
 3. **Клонирайте репозиторито:**
    ```cmd
-   git clone https://github.com/ваш-username/image-downloader.git
+   git clone https://github.com/DeyanShahov/image-downloader.git
    ```
 
 4. **Влезте в директорията на проекта:**
