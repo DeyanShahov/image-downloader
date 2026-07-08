@@ -162,7 +162,12 @@ def get_github_latest_commit() -> Optional[Dict]:
         response = requests.get(GITHUB_API_URL, headers=headers, timeout=REQUEST_TIMEOUT)
         
         if response.status_code == 200:
-            commit_data = response.json()[0]  # Най-нов е първи
+            data = response.json()
+            # API-то /commits/main връща единичен обект, а /commits?sha=main връща масив
+            if isinstance(data, list):
+                commit_data = data[0]  # Най-нов е първи
+            else:
+                commit_data = data  # Единичен обект
             return {
                 'sha': commit_data['sha'],
                 'date': commit_data['commit']['committer']['date'],
@@ -285,7 +290,7 @@ def perform_update() -> Tuple[bool, str]:
         return False, error_msg
     
     try:
-        # Изпълнение на git pull
+        # Опит 1: Нормален git pull
         result = subprocess.run(
             ['git', 'pull', 'origin', 'main'],
             capture_output=True,
@@ -293,6 +298,17 @@ def perform_update() -> Tuple[bool, str]:
             timeout=60,
             check=False
         )
+        
+        # Опит 2: Ако откаже поради несвързани истории, пробвай с --allow-unrelated-histories
+        if result.returncode != 0 and "unrelated histories" in result.stderr:
+            print("[WARNING] Git откри несвързани истории - опит с --allow-unrelated-histories...")
+            result = subprocess.run(
+                ['git', 'pull', 'origin', 'main', '--allow-unrelated-histories'],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False
+            )
         
         if result.returncode == 0:
             success_msg = f"Обновяването е успешно!\n{result.stdout}"
