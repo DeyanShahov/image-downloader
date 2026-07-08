@@ -49,11 +49,11 @@ def download_images(url_list, iterations, output_folder, url_indices=None):
 
         # Proverka za istoriyata na sesiyata
         if start_url in SESSION_HISTORY:
-            message = f"--- PROPUSKANE: URL adresat veche e obraboten v tazi sesiya: {start_url} ---"
+            message = f"--- ПРОПУСКАНЕ: URL адресът вече е обработен в тази сесия ---: {start_url} ---"
             yield f"data: {json.dumps({'type': 'info', 'message': message})}\n\n"
             continue
 
-        yield f"data: {json.dumps({'type': 'info', 'message': f'--- Obrabotka na URL {index + 1} ot {total_urls}: {start_url} ---'})}\n\n"
+        yield f"data: {json.dumps({'type': 'info', 'message': f'--- Обработка на URL {index + 1} ot {total_urls}: {start_url} ---'})}\n\n"
 
         # Izvikvane na logikata za edinichen URL
         for message in process_single_url(start_url, iterations, output_folder, all_downloaded_files):
@@ -66,7 +66,7 @@ def download_images(url_list, iterations, output_folder, url_indices=None):
         SESSION_HISTORY.add(start_url)
 
     # Signal completion at the very end
-    completion_message = f"Gotovo. Obshto svaleni failove ot vsichki adresi: {len(all_downloaded_files)}."
+    completion_message = f"Готово. Общо свалени файлове от всички адреси: {len(all_downloaded_files)}."
     print(completion_message)
 
     # Avtomatichno inkrementirane za vsichki indeksi ot spisaka (s broi napovtoreniya)
@@ -79,19 +79,19 @@ def download_images(url_list, iterations, output_folder, url_indices=None):
             success, old_url, new_url = _url_manager.increment_url_by_count(idx, count)
             if success and new_url:
                 increment_message = (
-                    f"URL ot spisaka e inkrementiran s {count} stypki (index {idx}): {old_url} -> {new_url}"
+                    f"URL от списъка е успешно инкрементиран на {count} стъпки (index {idx}): {old_url} -> {new_url}"
                 )
                 print(increment_message)
                 yield f"data: {json.dumps({'type': 'increment_info', 'url_index': idx, 'old_url': old_url, 'new_url': new_url, 'count': count, 'message': increment_message})}\n\n"
             elif old_url and not new_url:
                 no_increment_message = (
-                    f"URL ot spisaka ne mozhe da se inkrementira (nyama chislo v direktoriyata): {old_url}"
+                    f"URL от списъка не може да се инкрементира (няма число в директорията на URL-а): {old_url}"
                 )
                 print(no_increment_message)
                 yield f"data: {json.dumps({'type': 'info', 'message': no_increment_message})}\n\n"
     elif url_indices and not has_downloaded_any:
         skip_increment_message = (
-            f"URL ot spisaka nqma da bude inkrementiran, zashtoto ne e svaleno nito edno izobrazhenie."
+            f"URL от списъка няма да бъде инкрементиран, защото не е свалено нито едно изображение."
         )
         print(skip_increment_message)
         yield f"data: {json.dumps({'type': 'info', 'message': skip_increment_message})}\n\n"
@@ -122,7 +122,7 @@ def process_single_url(start_url, iterations, output_folder, downloaded_files_li
         match = re.search(r'^(.*?)(\d+)$', filename)
 
     if not match:
-        error_message = f"GRESHKA: Ne moga da razpoyana poreden nomer v URL: {start_url}"
+        error_message = f"ГРЕШКА: Не мога да разпозная поредният номер в URL: {start_url}"
         print(error_message)
         yield f"data: {json.dumps({'type': 'error', 'message': error_message})}\n\n"
         return
@@ -134,7 +134,7 @@ def process_single_url(start_url, iterations, output_folder, downloaded_files_li
     start_num = int(start_num_str)
     padding = len(start_num_str)  # Zapazvame dalzhinata za vodeshtite nuli (01 vs 1)
 
-    initial_message = f"Zasichan shablon: {prefix}[{start_num_str}]{suffix}{extension}. Startirane na svalyane za {iterations} izobrazheniya..."
+    initial_message = f"Засечан шаблон: {prefix}[{start_num_str}]{suffix}{extension}. Стартиране на сваляне за {iterations} изображения..."
     print(f"-> {initial_message}")
     yield f"data: {json.dumps({'type': 'info', 'message': initial_message})}\n\n"
 
@@ -171,7 +171,7 @@ def process_single_url(start_url, iterations, output_folder, downloaded_files_li
                 yield f"data: {json.dumps({'type': 'progress', 'message': message, 'current': i + 1, 'total': iterations, 'file': save_name})}\n\n"
 
             elif response.status_code == 404:
-                message = f"[404] Nyama izobrazhenie na adres: {current_url}. Spirane na tsikula."
+                message = f"[404] Няма изображение на адрес: {current_url}. Спиране на цикъла."
                 print(message)
                 yield f"data: {json.dumps({'type': 'info', 'message': message})}\n\n"
                 break  # Spirame, ako stignem kraya na galeriyata
@@ -181,16 +181,16 @@ def process_single_url(start_url, iterations, output_folder, downloaded_files_li
                 yield f"data: {json.dumps({'type': 'info', 'message': message})}\n\n"
 
         except requests.exceptions.Timeout:
-            message = f"[Timeout] Serverat ne otgovori v ramkite na {REQUEST_TIMEOUT} sekundi: {current_url}"
+            message = f"[Timeout] Сървърът не отговори в рамките на  {REQUEST_TIMEOUT} секунди: {current_url}"
             print(message)
             yield f"data: {json.dumps({'type': 'error', 'message': message})}\n\n"
 
         except requests.exceptions.ConnectionError:
-            message = f"[ConnectionError] Neuspeshna vrazka sus servera (proverete URL ili mrezhata): {current_url}"
+            message = f"[ConnectionError] Неуспешна връзка със сървъра (проверете URL или мрежата): {current_url}"
             print(message)
             yield f"data: {json.dumps({'type': 'error', 'message': message})}\n\n"
 
         except requests.exceptions.RequestException as e:
-            message = f"[Error] Mrezhova greshka pri {current_url}: {e}"
+            message = f"[Error] Мрежова грешка при {current_url}: {e}"
             print(message)
             yield f"data: {json.dumps({'type': 'error', 'message': message})}\n\n"
