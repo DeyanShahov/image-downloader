@@ -1,6 +1,6 @@
-# Image Downloader
+# image-downloader
 
-Flask уеб приложение за автоматично сваляне на последователни изображения от URL адреси с поддръжка на инкрементиране.
+Flask web application for automatic downloading of sequential images from URLs with auto-increment support
 
 ## Функционалности
 
@@ -163,6 +163,6 @@ python version_checker.py
 - От менюто с обновление, натиснете "По-късно"
 - Обновлението ще бъде предложено отново при следващо стартиране
 
-## Лиценз
+## License
 
 Educational purposes only.
