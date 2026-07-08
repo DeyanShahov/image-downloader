@@ -11,6 +11,7 @@ from typing import Optional, Dict, Tuple
 GITHUB_OWNER = "DeyanShahov"
 GITHUB_REPO = "image-downloader"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/commits/main"
+GITHUB_VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_OWNER}/{GITHUB_REPO}/main/version.txt"
 
 # Files
 VERSION_FILE = "version.txt"
@@ -88,6 +89,61 @@ def save_local_version(version_info_obj: version_info):
         print(f"[OK] Локална версия запазена: {version_info_obj.version}")
     except Exception as e:
         print(f"[ERROR] Неуспешно запазване на локална версия: {e}")
+
+
+def get_github_remote_version() -> Optional[str]:
+    """
+    Извлича версията от version.txt в GitHub repository-то.
+    
+    Returns:
+        Версия като string или None при грешка
+    """
+    try:
+        response = requests.get(GITHUB_VERSION_URL, timeout=REQUEST_TIMEOUT)
+        if response.status_code == 200:
+            return response.text.strip()
+        return None
+    except Exception as e:
+        print(f"[ERROR] Грешка при получаване на remote версия: {e}")
+        return None
+
+
+def compare_versions(local_version: str, remote_version: str) -> bool:
+    """
+    Сравнява два версии като текстове.
+    
+    Args:
+        local_version: Локална версия (напр. "1.0.0")
+        remote_version: Remote версия (напр. "1.1.0")
+    
+    Returns:
+        True ако remote_version е по-нова от local_version
+    """
+    if not local_version or not remote_version:
+        return False
+    
+    try:
+        # Split versions into parts
+        local_parts = [int(x) for x in local_version.split('.') if x.isdigit()]
+        remote_parts = [int(x) for x in remote_version.split('.') if x.isdigit()]
+        
+        if not local_parts or not remote_parts:
+            return False
+        
+        # Compare each part
+        for i in range(max(len(local_parts), len(remote_parts))):
+            local_part = local_parts[i] if i < len(local_parts) else 0
+            remote_part = remote_parts[i] if i < len(remote_parts) else 0
+            
+            if remote_part > local_part:
+                return True
+            elif remote_part < local_part:
+                return False
+        
+        return False  # Версиите са еднакви
+    except Exception as e:
+        print(f"[WARNING] Грешка при сравнение на версии: {e}")
+        return False
 
 
 def get_github_latest_commit() -> Optional[Dict]:
@@ -172,37 +228,35 @@ def check_for_updates() -> Tuple[bool, Optional[Dict], Optional[str]]:
     
     # Четем локална версия
     local_ver = get_local_version()
-    print(f"[INFO] Локална версия: {local_ver.version} (последно обновление: {local_ver.last_commit_date})")
+    print(f"[INFO] Локална версия: {local_ver.version}")
     
-    # Получаваме информация от GitHub
-    github_commit = get_github_latest_commit()
-    
-    if not github_commit:
+    # Получаваме remote версия от GitHub
+    remote_version = get_github_remote_version()
+    if not remote_version:
         return False, None, "Неуспешно получаване на информация от GitHub"
     
-    github_date = github_commit['date']
-    print(f"[INFO] Последен commit в GitHub: {github_date}")
+    print(f"[INFO] Версия в GitHub: {remote_version}")
     
-    # Сравняваме дати
-    has_update = compare_dates(github_date, local_ver.last_commit_date)
+    # Сравняваме версиите
+    has_update = compare_versions(local_ver.version, remote_version)
     
     if has_update:
+        # Получаваме и commit информация за банера
+        github_commit = get_github_latest_commit()
         message = (
             f"Налична е нова версия!\n"
-            f"Локална: {local_ver.version} ({local_ver.last_commit_date})\n"
-            f"GitHub: {github_commit['sha'][:8]} ({github_date})\n"
-            f"Последно обновление: {github_commit['message']}"
+            f"Локална: {local_ver.version}\n"
+            f"GitHub: {remote_version}\n"
+            f"Обновете проектa чрез менюто или git pull."
         )
         print(f"[UPDATE] {message}")
         return True, github_commit, message
     else:
-        message = "Вашата версия е актуална."
+        message = f"Вашата версия ({local_ver.version}) е актуална."
         print(f"[OK] {message}")
         
-        # Ако имаме GitHub commit info, актуализираме local_version.json
-        if github_commit:
-            local_ver.last_commit_date = github_date
-            save_local_version(local_ver)
+        # Актуализираме local_version.json с текущата версия
+        save_local_version(local_ver)
         
         return False, None, message
 
