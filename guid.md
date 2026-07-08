@@ -32,8 +32,6 @@
 
 ```json
 [
-  "https://content3.erosberry.com/wowgirls.com/0017/00.jpg",
-  "https://content3.erosberry.com/wowgirls.com/0018/00.jpg",
   "https://cdn.example.com/gallery/0001/photo_001.jpg"
 ]
 ```
