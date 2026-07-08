@@ -268,12 +268,14 @@ def check_for_updates() -> Tuple[bool, Optional[Dict], Optional[str]]:
 
 def perform_update() -> Tuple[bool, str]:
     """
-    Изпълнява `git pull` за обновяване на локалното repository.
+    Изпълнява `git fetch && git reset --hard origin/main` за обновяване на локалното repository.
+    Това гарантира, че локалните файлове се синхронизират принудително с GitHub,
+    дори ако има локални промени или несвързани истории.
     
     Returns:
         Tuple[bool, str]: (успех, съобщение)
     """
-    print("[UPDATE] Стартиране на git pull...")
+    print("[UPDATE] Стартиране на git update...")
     
     # Проверка дали сме в git repository
     if not os.path.exists('.git'):
@@ -290,49 +292,64 @@ def perform_update() -> Tuple[bool, str]:
         return False, error_msg
     
     try:
-        # Опит 1: Нормален git pull
-        result = subprocess.run(
-            ['git', 'pull', 'origin', 'main'],
+        # Стъпка 1: git fetch - изтегля най-новите refs от remote
+        print("[UPDATE] Изтегляне на последните промени от GitHub...")
+        fetch_result = subprocess.run(
+            ['git', 'fetch', 'origin'],
             capture_output=True,
             text=True,
             timeout=60,
             check=False
         )
         
-        # Опит 2: Ако откаже поради несвързани истории, пробвай с --allow-unrelated-histories
-        if result.returncode != 0 and "unrelated histories" in result.stderr:
-            print("[WARNING] Git откри несвързани истории - опит с --allow-unrelated-histories...")
-            result = subprocess.run(
-                ['git', 'pull', 'origin', 'main', '--allow-unrelated-histories'],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                check=False
-            )
+        if fetch_result.returncode != 0:
+            error_msg = f"Git fetch се провали с код {fetch_result.returncode}:\n{fetch_result.stderr}"
+            print(f"[ERROR] {error_msg}")
+            return False, error_msg
         
-        if result.returncode == 0:
-            success_msg = f"Обновяването е успешно!\n{result.stdout}"
+        # Стъпка 2: git reset --hard origin/main - принудително синхронизиране
+        print("[UPDATE] Принудително синхронизиране с GitHub...")
+        reset_result = subprocess.run(
+            ['git', 'reset', '--hard', 'origin/main'],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False
+        )
+        
+        if reset_result.returncode == 0:
+            # Изтриваме local_version.json за да не кешира стара версия
+            # (този файл не се version-ва в git)
+            if os.path.exists(LOCAL_VERSION_FILE):
+                try:
+                    os.remove(LOCAL_VERSION_FILE)
+                    print(f"[OK] Кешът {LOCAL_VERSION_FILE} е изтрит")
+                except Exception as e:
+                    print(f"[WARNING] Неуспешно изтриване на {LOCAL_VERSION_FILE}: {e}")
+            
+            # Прочитаме новата версия от обновения version.txt
+            new_local_ver = get_local_version()
+            success_msg = f"Обновяването е успешно! Версия: {new_local_ver.version}"
             print(f"[OK] {success_msg}")
             
-            # Актуализираме местната версия
-            local_ver = get_local_version()
+            # Запазваме новата версия в local_version.json
             github_commit = get_github_latest_commit()
             if github_commit:
-                local_ver.last_commit_date = github_commit['date']
-                save_local_version(local_ver)
+                new_local_ver.last_commit_date = github_commit['date']
+            save_local_version(new_local_ver)
             
             return True, success_msg
         else:
-            error_msg = f"Git pull се провали с код {result.returncode}:\n{result.stderr}"
+            error_msg = f"Git reset се провали с код {reset_result.returncode}:\n{reset_result.stderr}"
             print(f"[ERROR] {error_msg}")
             return False, error_msg
             
     except subprocess.TimeoutExpired:
-        error_msg = "Git pull заговори. Timeout след 60 секунди."
+        error_msg = "Git операцията заговори. Timeout след 60 секунди."
         print(f"[ERROR] {error_msg}")
         return False, error_msg
     except Exception as e:
-        error_msg = f"Грешка при изпълнение на git pull: {e}"
+        error_msg = f"Грешка при изпълнение на git update: {e}"
         print(f"[ERROR] {error_msg}")
         return False, error_msg
 
