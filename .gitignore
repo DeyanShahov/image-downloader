@@ -11,6 +11,7 @@ env/
 
 # Application specific
 local_version.json
+urls.json
 *.log
 
 # IDE
